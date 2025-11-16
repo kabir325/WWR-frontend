@@ -1,20 +1,26 @@
 'use client';
 
-import { useState } from 'react';
-import PlayerCardProxy from '@/components/PlayerCardProxy';
-import { Music, Server } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import PlayerCard from '@/components/PlayerCard';
+import { Music } from 'lucide-react';
 
-const PROXY_URL = process.env.NEXT_PUBLIC_PROXY_URL || 'http://localhost:3001';
+const PI1_IP = process.env.NEXT_PUBLIC_PI1_IP || '100.104.127.38';
+const PI2_IP = process.env.NEXT_PUBLIC_PI2_IP || '100.114.175.61';
+const API_PORT = process.env.NEXT_PUBLIC_API_PORT || '5000';
 
-export default function HomeProxy() {
+export default function Home() {
   const [players] = useState([
     {
       id: 'pi1',
       name: 'Music Player 1',
+      ip: PI1_IP,
+      apiUrl: `http://${PI1_IP}:${API_PORT}`,
     },
     {
       id: 'pi2',
       name: 'Music Player 2',
+      ip: PI2_IP,
+      apiUrl: `http://${PI2_IP}:${API_PORT}`,
     },
   ]);
 
@@ -29,27 +35,26 @@ export default function HomeProxy() {
               Resort Music Control
             </h1>
           </div>
-          <p className="text-gray-600 flex items-center justify-center gap-2">
-            <Server className="w-4 h-4" />
-            Managed via EC2 Proxy Gateway
+          <p className="text-gray-600">
+            Manage your music players remotely via Tailscale
           </p>
         </div>
 
         {/* Player Cards */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {players.map((player) => (
-            <PlayerCardProxy
+            <PlayerCard
               key={player.id}
-              piId={player.id}
               name={player.name}
-              proxyUrl={PROXY_URL}
+              ip={player.ip}
+              apiUrl={player.apiUrl}
             />
           ))}
         </div>
 
         {/* Footer */}
         <div className="mt-8 text-center text-sm text-gray-500">
-          <p>Secure Connection via EC2 Proxy • No Tailscale Required</p>
+          <p>Connected via Tailscale • Secure Remote Access</p>
         </div>
       </div>
     </div>
