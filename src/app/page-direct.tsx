@@ -45,6 +45,7 @@ export default function Home() {
           {players.map((player) => (
             <PlayerCard
               key={player.id}
+              id={player.id}
               name={player.name}
               ip={player.ip}
               apiUrl={player.apiUrl}
