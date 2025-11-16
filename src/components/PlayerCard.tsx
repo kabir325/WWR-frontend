@@ -30,12 +30,16 @@ interface PlayerStatus {
 }
 
 interface PlayerCardProps {
+  id: string;
   name: string;
-  ip: string;
+  ip?: string;
+  location?: string;
+  status?: string;
   apiUrl: string;
+  userRole?: 'admin' | 'operator' | 'viewer';
 }
 
-export default function PlayerCard({ name, ip, apiUrl }: PlayerCardProps) {
+export default function PlayerCard({ id, name, ip, location, status: piStatus, apiUrl, userRole = 'operator' }: PlayerCardProps) {
   const [status, setStatus] = useState<PlayerStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -79,10 +83,11 @@ export default function PlayerCard({ name, ip, apiUrl }: PlayerCardProps) {
     }
   };
 
-  const handlePlay = () => sendControl('play');
-  const handlePause = () => sendControl('pause');
-  const handleSkip = () => sendControl('skip');
+  const handlePlay = () => userRole !== 'viewer' && sendControl('play');
+  const handlePause = () => userRole !== 'viewer' && sendControl('pause');
+  const handleSkip = () => userRole !== 'viewer' && sendControl('skip');
   const handleVolumeChange = (newVolume: number) => {
+    if (userRole === 'viewer') return;
     setVolume(newVolume);
     sendControl('volume', { volume: newVolume / 100 });
   };
@@ -107,15 +112,33 @@ export default function PlayerCard({ name, ip, apiUrl }: PlayerCardProps) {
             <Music className="w-6 h-6 text-indigo-600" />
             {name}
           </h2>
-          <p className="text-sm text-gray-500 mt-1">
-            {ip}
-          </p>
+          <div className="flex items-center gap-2 mt-1">
+            {location && (
+              <span className="text-sm text-gray-500">
+                📍 {location}
+              </span>
+            )}
+            {ip && (
+              <>
+                <span className="text-gray-400">•</span>
+                <span className="text-sm text-gray-500">
+                  {ip}
+                </span>
+              </>
+            )}
+          </div>
         </div>
         <div className="flex items-center gap-2">
-          {error ? (
-            <AlertCircle className="w-6 h-6 text-red-500" />
+          {piStatus === 'offline' || error ? (
+            <div className="flex items-center gap-1 text-red-500">
+              <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+              <span className="text-xs font-medium">Offline</span>
+            </div>
           ) : (
-            <CheckCircle className="w-6 h-6 text-green-500" />
+            <div className="flex items-center gap-1 text-green-500">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <span className="text-xs font-medium">Online</span>
+            </div>
           )}
         </div>
       </div>
@@ -190,25 +213,38 @@ export default function PlayerCard({ name, ip, apiUrl }: PlayerCardProps) {
           <div className="flex items-center justify-center gap-4 mb-6">
             <button
               onClick={handlePause}
-              disabled={!status?.is_playing}
-              className="p-4 bg-gray-100 rounded-full hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              disabled={!status?.is_playing || userRole === 'viewer'}
+              className={`p-4 rounded-full transition-colors ${
+                userRole === 'viewer'
+                  ? 'bg-gray-200 cursor-not-allowed'
+                  : 'bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed'
+              }`}
             >
-              <Pause className="w-6 h-6 text-gray-700" />
+              <Pause className={`w-6 h-6 ${userRole === 'viewer' ? 'text-gray-400' : 'text-gray-700'}`} />
             </button>
             
             <button
               onClick={handlePlay}
-              disabled={status?.is_playing}
-              className="p-6 bg-indigo-600 rounded-full hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg"
+              disabled={status?.is_playing || userRole === 'viewer'}
+              className={`p-6 rounded-full transition-colors shadow-lg ${
+                userRole === 'viewer' 
+                  ? 'bg-gray-300 cursor-not-allowed' 
+                  : 'bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed'
+              }`}
             >
               <Play className="w-8 h-8 text-white" />
             </button>
             
             <button
               onClick={handleSkip}
-              className="p-4 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors"
+              disabled={userRole === 'viewer'}
+              className={`p-4 rounded-full transition-colors ${
+                userRole === 'viewer'
+                  ? 'bg-gray-200 cursor-not-allowed'
+                  : 'bg-gray-100 hover:bg-gray-200'
+              }`}
             >
-              <SkipForward className="w-6 h-6 text-gray-700" />
+              <SkipForward className={`w-6 h-6 ${userRole === 'viewer' ? 'text-gray-400' : 'text-gray-700'}`} />
             </button>
           </div>
 
@@ -226,8 +262,13 @@ export default function PlayerCard({ name, ip, apiUrl }: PlayerCardProps) {
               min="0"
               max="100"
               value={volume}
+              disabled={userRole === 'viewer'}
               onChange={(e) => handleVolumeChange(parseInt(e.target.value))}
-              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+              className={`w-full h-2 rounded-lg appearance-none cursor-pointer ${
+                userRole === 'viewer'
+                  ? 'bg-gray-300 cursor-not-allowed'
+                  : 'bg-gray-200 accent-indigo-600'
+              }`}
             />
           </div>
         </>
